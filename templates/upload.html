@@ -1,1 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Radwa & Ehab - Wedding Photos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: 'Playfair Display', serif;
+            background: linear-gradient(135deg, #f7f3ee 0%, #f0ebe4 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #4a5d5a;
+            text-align: center;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #a68a6f;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #4a5d5a;
+            font-weight: 500;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e8d8c3;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        input[type="file"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px dashed #e8d8c3;
+            border-radius: 8px;
+            background: #f9f5f0;
+        }
+        button {
+            background: #8a9a8b;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 30px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #4a5d5a;
+            transform: translateY(-2px);
+        }
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .file-list {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌟 Radwa & Ehab's Wedding Memories 🌟</h1>
+        <div class="subtitle">Share your photos from our special day!</div>
+        
+        <form id="uploadForm" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="guest_name">Your Name (optional):</label>
+                <input type="text" id="guest_name" name="guest_name" placeholder="e.g., Ahmed">
+            </div>
+            
+            <div class="form-group">
+                <label for="photos">Select Photos (you can choose multiple):</label>
+                <input type="file" id="photos" name="files" multiple accept="image/*" required>
+                <div class="file-list" id="fileList"></div>
+            </div>
+            
+            <button type="submit">📤 Upload Photos</button>
+        </form>
+        
+        <div id="message" class="message"></div>
+    </div>
 
+    <script>
+        document.getElementById('photos').addEventListener('change', function(e) {
+            const fileList = document.getElementById('fileList');
+            const count = e.target.files.length;
+            fileList.textContent = count + ' photo' + (count !== 1 ? 's' : '') + ' selected';
+        });
+
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const messageDiv = document.getElementById('message');
+            
+            messageDiv.style.display = 'none';
+            messageDiv.className = 'message';
+            
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    const successCount = result.results.filter(r => r.success).length;
+                    const failCount = result.results.filter(r => !r.success).length;
+                    
+                    let message = `✅ ${successCount} photo(s) uploaded successfully!`;
+                    if (failCount > 0) {
+                        message += `\n❌ ${failCount} photo(s) failed.`;
+                    }
+                    
+                    messageDiv.textContent = message;
+                    messageDiv.className = 'message success';
+                    document.getElementById('uploadForm').reset();
+                    document.getElementById('fileList').textContent = '';
+                } else {
+                    messageDiv.textContent = 'Error: ' + (result.error || 'Upload failed');
+                    messageDiv.className = 'message error';
+                }
+            } catch (error) {
+                messageDiv.textContent = 'Error: Could not connect to server';
+                messageDiv.className = 'message error';
+            }
+            
+            messageDiv.style.display = 'block';
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        });
+    </script>
+</body>
+</html>
